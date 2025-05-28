@@ -26,6 +26,7 @@ namespace StringLocalizer
                 return;
 
             treeView.Nodes.Clear();
+            SetResourcesFolder(null);
             SetComponentsOnAnalyzing(true);
             _projectFolder = folderBrowserDialog.SelectedPath;
             ScanProjectFolder();
@@ -33,11 +34,18 @@ namespace StringLocalizer
 
         private void selectResourcesFolderToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            folderBrowserDialog.SelectedPath = _rootFolderItem?.Name;
             if (folderBrowserDialog.ShowDialog() != DialogResult.OK)
                 return;
 
-            _resourcesFolder = folderBrowserDialog.SelectedPath;
+            SetResourcesFolder(folderBrowserDialog.SelectedPath);
+        }
+
+        private void SetResourcesFolder(string folder)
+        {
+            _resourcesFolder = folder;
             lbResourcesFolder.Text = _resourcesFolder;
+            SetMenuItemsEnabled();
         }
 
         private void ScanProjectFolder()
@@ -50,6 +58,7 @@ namespace StringLocalizer
                 {
                     CreateTree();
                     SetComponentsOnAnalyzing(false);
+                    SetMenuItemsEnabled();
                 });
             });
         }
@@ -228,6 +237,39 @@ namespace StringLocalizer
             var path = item.GetFullPath();
             var resPath = path == _rootFolderItem.Name ? string.Empty : path.Substring(_rootFolderItem.Name.Length + 1);
             return Path.Combine(_resourcesFolder, resPath);
+        }
+
+        private void findToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var formFind = new FormFind())
+            {
+                formFind.ShowDialog();
+            }
+        }
+
+        private void replaceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var formReplace = new FormReplace())
+            {
+                formReplace.ShowDialog();
+            }
+        }
+
+        private void createMissingFilesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void closeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void SetMenuItemsEnabled()
+        {
+            findToolStripMenuItem.Enabled = treeView.Nodes.Count > 0;
+            replaceToolStripMenuItem.Enabled = treeView.Nodes.Count > 0;
+            createMissingFilesToolStripMenuItem.Enabled = treeView.Nodes.Count > 0 && !string.IsNullOrEmpty(_resourcesFolder);
         }
     }
 }
