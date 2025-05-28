@@ -38,6 +38,7 @@
             treeView = new TreeView();
             imageList = new ImageList(components);
             splitContainer = new SplitContainer();
+            resourceEditor = new ResourceEditor();
             statusStrip = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
             lbResourcesFolder = new ToolStripStatusLabel();
@@ -45,6 +46,7 @@
             menuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
             splitContainer.Panel1.SuspendLayout();
+            splitContainer.Panel2.SuspendLayout();
             splitContainer.SuspendLayout();
             statusStrip.SuspendLayout();
             SuspendLayout();
@@ -54,7 +56,7 @@
             menuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem });
             menuStrip.Location = new Point(0, 0);
             menuStrip.Name = "menuStrip";
-            menuStrip.Size = new Size(800, 24);
+            menuStrip.Size = new Size(1174, 24);
             menuStrip.TabIndex = 0;
             menuStrip.Text = "menuStrip1";
             // 
@@ -91,8 +93,9 @@
             treeView.Location = new Point(0, 0);
             treeView.Name = "treeView";
             treeView.SelectedImageIndex = 0;
-            treeView.Size = new Size(266, 404);
+            treeView.Size = new Size(284, 688);
             treeView.TabIndex = 1;
+            treeView.AfterSelect += treeView_AfterSelect;
             // 
             // imageList
             // 
@@ -112,16 +115,31 @@
             // splitContainer.Panel1
             // 
             splitContainer.Panel1.Controls.Add(treeView);
-            splitContainer.Size = new Size(800, 404);
-            splitContainer.SplitterDistance = 266;
+            // 
+            // splitContainer.Panel2
+            // 
+            splitContainer.Panel2.Controls.Add(resourceEditor);
+            splitContainer.Size = new Size(1174, 688);
+            splitContainer.SplitterDistance = 284;
             splitContainer.TabIndex = 2;
+            // 
+            // resourceEditor
+            // 
+            resourceEditor.Dock = DockStyle.Fill;
+            resourceEditor.Location = new Point(0, 0);
+            resourceEditor.Name = "resourceEditor";
+            resourceEditor.Size = new Size(886, 688);
+            resourceEditor.TabIndex = 0;
+            resourceEditor.CommentChanged += resourceEditor_CommentChanged;
+            resourceEditor.NeutralChanged += resourceEditor_NeutralChanged;
+            resourceEditor.LanguageChanged += resourceEditor_LanguageChanged;
             // 
             // statusStrip
             // 
             statusStrip.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1, lbResourcesFolder, toolStripProgressBar });
-            statusStrip.Location = new Point(0, 428);
+            statusStrip.Location = new Point(0, 712);
             statusStrip.Name = "statusStrip";
-            statusStrip.Size = new Size(800, 22);
+            statusStrip.Size = new Size(1174, 22);
             statusStrip.TabIndex = 3;
             statusStrip.Text = "statusStrip1";
             // 
@@ -148,7 +166,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(1174, 734);
             Controls.Add(splitContainer);
             Controls.Add(menuStrip);
             Controls.Add(statusStrip);
@@ -158,6 +176,7 @@
             menuStrip.ResumeLayout(false);
             menuStrip.PerformLayout();
             splitContainer.Panel1.ResumeLayout(false);
+            splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer).EndInit();
             splitContainer.ResumeLayout(false);
             statusStrip.ResumeLayout(false);
@@ -180,5 +199,6 @@
         private ImageList imageList;
         private ToolStripMenuItem selectResourcesFolderToolStripMenuItem;
         private ToolStripProgressBar toolStripProgressBar;
+        private ResourceEditor resourceEditor;
     }
 }

@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static StringLocalizer.ClassItem;
+using static StringLocalizer.Models.ClassItem;
 
-namespace StringLocalizer
+namespace StringLocalizer.Models
 {
     internal class FolderItem
     {
-        public FolderItem(string name)
+        public FolderItem(string name, FolderItem parent)
         {
             Name = name;
+            Parent = parent;
         }
         public string Name { get; private set; }
         public FolderItem Parent { get; set; }
@@ -41,12 +42,12 @@ namespace StringLocalizer
                     itemType = ItemTypeEnum.CSharp;
                     break;
             }
-            ClassItems = ClassItems.Append(new ClassItem(name, itemType, keys)).ToArray();
+            ClassItems = ClassItems.Append(new ClassItem(name, itemType, keys, this)).ToArray();
             SetHasLocalizers();
         }
         public void AddClassCSItem(string name, IEnumerable<string> keys)
         {
-            ClassItems = ClassItems.Append(new ClassItem(name, ItemTypeEnum.CSharp, keys)).ToArray();
+            ClassItems = ClassItems.Append(new ClassItem(name, ItemTypeEnum.CSharp, keys, this)).ToArray();
             SetHasLocalizers();
         }
         public void SetHasLocalizers()
@@ -58,10 +59,16 @@ namespace StringLocalizer
 
         public FolderItem AddSubFolder(string name)
         {
-            var folderItem = new FolderItem(name);
-            folderItem.Parent = this;
+            var folderItem = new FolderItem(name, this);
             SubFolders = SubFolders.Append(folderItem).ToArray();
             return folderItem;
+        }
+
+        public string GetFullPath()
+        {
+            if (Parent == null)
+                return Name;
+            return Path.Combine(Parent.GetFullPath(), Name);
         }
     }
 
@@ -74,16 +81,21 @@ namespace StringLocalizer
             Razor
         }
 
-        public ClassItem(string name, ItemTypeEnum itemType, IEnumerable<string> keys)
+        public ClassItem(string name, ItemTypeEnum itemType, IEnumerable<string> keys, FolderItem parent)
         {
             Name = name;
             ItemType = itemType;
             Keys = keys.ToArray();
+            Parent = parent;
         }
 
         public string Name { get; private set; }
         public ItemTypeEnum ItemType { get; private set; }
         public FolderItem Parent { get; set; }
         public string[] Keys { get; private set; } = [];
+        public string GetFullPath()
+        {
+            return Parent.GetFullPath();
+        }
     }
 }
