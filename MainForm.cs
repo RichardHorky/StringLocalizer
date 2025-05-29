@@ -166,14 +166,21 @@ namespace StringLocalizer
 
         private void treeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
+            SetResourceEditorContent();
+        }
+
+        void SetResourceEditorContent()
+        {
             resourceEditor.Clear();
 
-            if (!(e.Node.Tag is ClassItem))
+            if (treeView.SelectedNode == null)
+                return;
+            if (!(treeView.SelectedNode.Tag is ClassItem))
                 return;
             if (string.IsNullOrEmpty(_resourcesFolder))
                 return;
 
-            var item = e.Node.Tag as ClassItem;
+            var item = treeView.SelectedNode.Tag as ClassItem;
             foreach (var key in item.Keys)
                 resourceEditor.AddKey(key);
 
@@ -292,9 +299,9 @@ namespace StringLocalizer
                     return;
                 }
                 SetComponentsOnAnalyzing(true);
-                resourceEditor.Clear();
                 _rootFolderItem.ClearMatchFilter();
                 FilterTree(formFind.FinText, startItem, formFind.MatchCase, formFind.MatchWholeWord);
+                SetResourceEditorContent();
             }
         }
 
@@ -357,6 +364,81 @@ namespace StringLocalizer
             {
                 if (formReplace.ShowDialog() != DialogResult.OK)
                     return;
+
+                var startItem = formReplace.InSelectedPathOnly ? treeView.SelectedNode?.Tag as FolderItem : _rootFolderItem;
+                if (startItem == null)
+                {
+                    MessageBox.Show("Please select a folder or file to start the search.", "No selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                SetComponentsOnAnalyzing(true);
+                _replacedItems = 0;
+                ReplaceInTreeTree(formReplace.FinText, formReplace.ReplaceWith, startItem, formReplace.MatchCase, formReplace.MatchWholeWord);
+            }
+        }
+
+        private void ReplaceInTreeTree(string text, string replaceWith, FolderItem folderItem, bool matchCase, bool matchWholeWord)
+        {
+            Task.Factory.StartNew(() =>
+            {
+                ReplaceInFolder(text, replaceWith, folderItem, matchCase, matchWholeWord);
+                this.Invoke((MethodInvoker)delegate
+                {
+                    MessageBox.Show($"Replaced {_replacedItems} occurrences of '{text}' with '{replaceWith}'.", "Replace Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    SetComponentsOnAnalyzing(false);
+                    SetResourceEditorContent();
+                });
+            });
+        }
+
+        int _replacedItems;
+        private void ReplaceInFolder(string text, string replaceWith, FolderItem folderItem, bool matchCase, bool matchWholeWord)
+        {
+            foreach (var subFolder in folderItem.SubFolders)
+            {
+                ReplaceInFolder(text, replaceWith, subFolder, matchCase, matchWholeWord);
+            }
+            foreach (var classItem in folderItem.ClassItems)
+            {
+                var resxFiles = GetResourceFiles(classItem);
+                foreach (var resxFile in resxFiles)
+                {
+                    bool hasBeenChanged = false;
+                    var xdoc = XDocument.Load(resxFile);
+                    var dataElements = xdoc.Descendants("data");
+                    var valueElements = dataElements.Select(i => i.Element("value"));
+                    var commentElements = dataElements.Select(i => i.Element("comment"));
+                    var allElements = valueElements.Concat(commentElements).Where(i => i != null).ToArray();
+                    var stringComparison = matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+                    foreach (var element in allElements)
+                    {
+                        if (string.IsNullOrEmpty(element.Value))
+                            continue;
+                        if (matchWholeWord)
+                        {
+                            if (element.Value.Equals(text, stringComparison))
+                            {
+                                element.SetValue(replaceWith);
+                                _replacedItems++;
+                                hasBeenChanged = true;
+                            }
+                        }
+                        else
+                        {
+                            int pos = 0;
+                            int index = 0;
+                            while (pos < element.Value.Length && (index = element.Value.IndexOf(text, pos, stringComparison)) >= 0)
+                            {
+                                element.SetValue(element.Value.Remove(index, text.Length).Insert(index, replaceWith));
+                                _replacedItems++;
+                                hasBeenChanged = true;
+                                pos = index + replaceWith.Length; // Move past the replaced text
+                            }
+                        }
+                    }
+                    if (hasBeenChanged)
+                        xdoc.Save(resxFile);
+                }
             }
         }
 
@@ -380,10 +462,10 @@ namespace StringLocalizer
         private void buttonCancelFiter_Click(object sender, EventArgs e)
         {
             panelFilter.Visible = false;
-            resourceEditor.Clear();
             treeView.Nodes.Clear();
             _rootFolderItem.ClearMatchFilter();
             CreateTree(false);
+            SetResourceEditorContent();
         }
     }
 }
