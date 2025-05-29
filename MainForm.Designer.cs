@@ -34,9 +34,12 @@
             fileToolStripMenuItem = new ToolStripMenuItem();
             projectFoderToolStripMenuItem = new ToolStripMenuItem();
             selectResourcesFolderToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator1 = new ToolStripSeparator();
+            closeToolStripMenuItem = new ToolStripMenuItem();
             editToolStripMenuItem = new ToolStripMenuItem();
             findToolStripMenuItem = new ToolStripMenuItem();
             replaceToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator2 = new ToolStripSeparator();
             createMissingFilesToolStripMenuItem = new ToolStripMenuItem();
             folderBrowserDialog = new FolderBrowserDialog();
             treeView = new TreeView();
@@ -47,15 +50,16 @@
             toolStripStatusLabel1 = new ToolStripStatusLabel();
             lbResourcesFolder = new ToolStripStatusLabel();
             toolStripProgressBar = new ToolStripProgressBar();
-            closeToolStripMenuItem = new ToolStripMenuItem();
-            toolStripSeparator1 = new ToolStripSeparator();
-            toolStripSeparator2 = new ToolStripSeparator();
+            panelFilter = new Panel();
+            buttonCancelFiter = new Button();
+            lbFilter = new Label();
             menuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
             splitContainer.Panel1.SuspendLayout();
             splitContainer.Panel2.SuspendLayout();
             splitContainer.SuspendLayout();
             statusStrip.SuspendLayout();
+            panelFilter.SuspendLayout();
             SuspendLayout();
             // 
             // menuStrip
@@ -91,6 +95,18 @@
             selectResourcesFolderToolStripMenuItem.Text = "Select &resources folder";
             selectResourcesFolderToolStripMenuItem.Click += selectResourcesFolderToolStripMenuItem_Click;
             // 
+            // toolStripSeparator1
+            // 
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new Size(230, 6);
+            // 
+            // closeToolStripMenuItem
+            // 
+            closeToolStripMenuItem.Name = "closeToolStripMenuItem";
+            closeToolStripMenuItem.Size = new Size(233, 22);
+            closeToolStripMenuItem.Text = "&Close";
+            closeToolStripMenuItem.Click += closeToolStripMenuItem_Click;
+            // 
             // editToolStripMenuItem
             // 
             editToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { findToolStripMenuItem, replaceToolStripMenuItem, toolStripSeparator2, createMissingFilesToolStripMenuItem });
@@ -116,6 +132,11 @@
             replaceToolStripMenuItem.Text = "&Replace";
             replaceToolStripMenuItem.Click += replaceToolStripMenuItem_Click;
             // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new Size(218, 6);
+            // 
             // createMissingFilesToolStripMenuItem
             // 
             createMissingFilesToolStripMenuItem.Enabled = false;
@@ -131,10 +152,10 @@
             treeView.Dock = DockStyle.Fill;
             treeView.ImageIndex = 0;
             treeView.ImageList = imageList;
-            treeView.Location = new Point(0, 0);
+            treeView.Location = new Point(0, 21);
             treeView.Name = "treeView";
             treeView.SelectedImageIndex = 0;
-            treeView.Size = new Size(284, 688);
+            treeView.Size = new Size(284, 667);
             treeView.TabIndex = 1;
             treeView.AfterSelect += treeView_AfterSelect;
             // 
@@ -156,6 +177,7 @@
             // splitContainer.Panel1
             // 
             splitContainer.Panel1.Controls.Add(treeView);
+            splitContainer.Panel1.Controls.Add(panelFilter);
             // 
             // splitContainer.Panel2
             // 
@@ -203,22 +225,40 @@
             toolStripProgressBar.Style = ProgressBarStyle.Marquee;
             toolStripProgressBar.Visible = false;
             // 
-            // closeToolStripMenuItem
+            // panelFilter
             // 
-            closeToolStripMenuItem.Name = "closeToolStripMenuItem";
-            closeToolStripMenuItem.Size = new Size(233, 22);
-            closeToolStripMenuItem.Text = "&Close";
-            closeToolStripMenuItem.Click += closeToolStripMenuItem_Click;
+            panelFilter.BackColor = Color.Red;
+            panelFilter.Controls.Add(lbFilter);
+            panelFilter.Controls.Add(buttonCancelFiter);
+            panelFilter.Dock = DockStyle.Top;
+            panelFilter.Location = new Point(0, 0);
+            panelFilter.Name = "panelFilter";
+            panelFilter.Size = new Size(284, 21);
+            panelFilter.TabIndex = 2;
+            panelFilter.Visible = false;
             // 
-            // toolStripSeparator1
+            // buttonCancelFiter
             // 
-            toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new Size(230, 6);
+            buttonCancelFiter.Dock = DockStyle.Right;
+            buttonCancelFiter.Location = new Point(209, 0);
+            buttonCancelFiter.Name = "buttonCancelFiter";
+            buttonCancelFiter.Size = new Size(75, 21);
+            buttonCancelFiter.TabIndex = 0;
+            buttonCancelFiter.Text = "Clear";
+            buttonCancelFiter.UseVisualStyleBackColor = true;
+            buttonCancelFiter.Click += buttonCancelFiter_Click;
             // 
-            // toolStripSeparator2
+            // lbFilter
             // 
-            toolStripSeparator2.Name = "toolStripSeparator2";
-            toolStripSeparator2.Size = new Size(218, 6);
+            lbFilter.Dock = DockStyle.Fill;
+            lbFilter.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lbFilter.ForeColor = Color.White;
+            lbFilter.Location = new Point(0, 0);
+            lbFilter.Name = "lbFilter";
+            lbFilter.Size = new Size(209, 21);
+            lbFilter.TabIndex = 1;
+            lbFilter.Text = "Filter Active";
+            lbFilter.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // MainForm
             // 
@@ -240,6 +280,7 @@
             splitContainer.ResumeLayout(false);
             statusStrip.ResumeLayout(false);
             statusStrip.PerformLayout();
+            panelFilter.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -266,5 +307,8 @@
         private ToolStripSeparator toolStripSeparator1;
         private ToolStripMenuItem closeToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator2;
+        private Panel panelFilter;
+        private Label lbFilter;
+        private Button buttonCancelFiter;
     }
 }

@@ -42,6 +42,7 @@
             chInSelectedPathOnly.Dock = DockStyle.Top;
             chInSelectedPathOnly.Location = new Point(3, 3);
             chInSelectedPathOnly.Name = "chInSelectedPathOnly";
+            chInSelectedPathOnly.Padding = new Padding(3, 0, 0, 0);
             chInSelectedPathOnly.Size = new Size(578, 19);
             chInSelectedPathOnly.TabIndex = 0;
             chInSelectedPathOnly.Text = "In &selected path only";

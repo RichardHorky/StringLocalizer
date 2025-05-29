@@ -102,6 +102,7 @@
             Controls.Add(tableLayoutPanelFind);
             Name = "FormFind";
             Text = "Find";
+            Shown += FormFind_Shown;
             Controls.SetChildIndex(tableLayoutPanelFind, 0);
             tableLayoutPanelFind.ResumeLayout(false);
             tableLayoutPanelFind.PerformLayout();

@@ -16,5 +16,25 @@ namespace StringLocalizer
         {
             InitializeComponent();
         }
+
+        public string FinText
+        {
+            get => edFindText.Text;
+        }
+
+        public bool MatchCase
+        {
+            get => chMatchCase.Checked;
+        }
+
+        public bool MatchWholeWord
+        {
+            get => chMatchWholeWords.Checked;
+        }
+
+        private void FormFind_Shown(object sender, EventArgs e)
+        {
+            edFindText.Focus();
+        }
     }
 }

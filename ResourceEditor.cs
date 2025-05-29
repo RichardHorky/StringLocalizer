@@ -58,6 +58,20 @@ namespace StringLocalizer
             }
         }
 
+        public void AddLanguage(string language)
+        {
+            if (!_table.Columns.Contains(language))
+            {
+                _table.Columns.Add(language, typeof(string));
+            }
+        }
+
+        public void ClearLanguageColums()
+        {
+            while (_table.Columns.Count > 3)
+                _table.Columns.RemoveAt(_table.Columns.Count - 1);
+        }
+
         private void CreateDataSource()
         {
             _table = new DataTable();

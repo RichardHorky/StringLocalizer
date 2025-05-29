@@ -24,6 +24,13 @@ namespace StringLocalizer.Models
         { 
             get => _hasLocalizers;
         }
+
+        private bool _matchFilter;
+        public bool MatchFilter
+        {
+            get => _matchFilter;
+        }
+
         public void AddClassItem(string name, string extension, IEnumerable<string> keys)
         {
             ItemTypeEnum itemType;
@@ -55,6 +62,22 @@ namespace StringLocalizer.Models
             _hasLocalizers = true;
             if (Parent != null)
                 Parent.SetHasLocalizers();
+        }
+
+        public void SetMatchFilter()
+        {
+            _matchFilter = true;
+            if (Parent != null)
+                Parent.SetMatchFilter();
+        }
+
+        public void ClearMatchFilter()
+        {
+            _matchFilter = false;
+            foreach (var subFolder in SubFolders)
+            {
+                subFolder.ClearMatchFilter();
+            }
         }
 
         public FolderItem AddSubFolder(string name)
@@ -93,9 +116,22 @@ namespace StringLocalizer.Models
         public ItemTypeEnum ItemType { get; private set; }
         public FolderItem Parent { get; set; }
         public string[] Keys { get; private set; } = [];
+
+        private bool _matchFilter;
+        public bool MatchFilter
+        {
+            get => _matchFilter;
+        }
+
         public string GetFullPath()
         {
             return Parent.GetFullPath();
+        }
+
+        public void SetMatchFilter()
+        {
+            _matchFilter = true;
+            Parent.SetMatchFilter();
         }
     }
 }

@@ -16,5 +16,10 @@ namespace StringLocalizer
         {
             InitializeComponent();
         }
+
+        public bool InSelectedPathOnly
+        {
+            get => chInSelectedPathOnly.Checked;
+        }
     }
 }

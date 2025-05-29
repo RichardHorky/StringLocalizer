@@ -16,5 +16,10 @@ namespace StringLocalizer
         {
             InitializeComponent();
         }
+
+        public string ReplaceWith
+        {
+            get => edReplaceWith.Text;
+        }
     }
 }

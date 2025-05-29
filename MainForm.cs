@@ -26,6 +26,7 @@ namespace StringLocalizer
                 return;
 
             treeView.Nodes.Clear();
+            resourceEditor.ClearLanguageColums();
             SetResourcesFolder(null);
             SetComponentsOnAnalyzing(true);
             _projectFolder = folderBrowserDialog.SelectedPath;
@@ -34,11 +35,24 @@ namespace StringLocalizer
 
         private void selectResourcesFolderToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            folderBrowserDialog.SelectedPath = _rootFolderItem?.Name;
+            folderBrowserDialog.SelectedPath = Path.Combine(_rootFolderItem?.Name, "Resources");
             if (folderBrowserDialog.ShowDialog() != DialogResult.OK)
                 return;
 
             SetResourcesFolder(folderBrowserDialog.SelectedPath);
+            AddLanguageColumns(_rootFolderItem);
+        }
+
+        private void AddLanguageColumns(FolderItem folderItem)
+        {
+            foreach (var folder in folderItem.SubFolders)
+            {
+                AddLanguageColumns(folder);
+            }
+            foreach (var classItem in folderItem.ClassItems)
+            {
+                AddMissingLanguageColumns(classItem);
+            }
         }
 
         private void SetResourcesFolder(string folder)
@@ -56,8 +70,10 @@ namespace StringLocalizer
                 ScanFolder(_projectFolder, _rootFolderItem);
                 this.Invoke((MethodInvoker)delegate
                 {
-                    CreateTree();
+                    CreateTree(false);
                     SetComponentsOnAnalyzing(false);
+                    if (!string.IsNullOrEmpty(_resourcesFolder))
+                        AddLanguageColumns(_rootFolderItem);
                     SetMenuItemsEnabled();
                 });
             });
@@ -88,15 +104,26 @@ namespace StringLocalizer
             }
         }
 
-        private void CreateTree()
+        private void AddMissingLanguageColumns(ClassItem classItem)
         {
-            AddTreeFolder(_rootFolderItem, treeView.Nodes);
+            foreach (var language in GetResourceLanguages(classItem))
+            {
+                resourceEditor.AddLanguage(language);
+            }
         }
 
-        private void AddTreeFiles(FolderItem folderItem, TreeNodeCollection treeNode)
+        private void CreateTree(bool filtered)
+        {
+            AddTreeFolder(_rootFolderItem, treeView.Nodes, filtered);
+        }
+
+        private void AddTreeFiles(FolderItem folderItem, TreeNodeCollection treeNode, bool filtered)
         {
             foreach (var item in folderItem.ClassItems)
             {
+                if (filtered && !item.MatchFilter)
+                    continue;
+
                 int imageIndex = -1;
                 switch (item.ItemType)
                 {
@@ -116,18 +143,18 @@ namespace StringLocalizer
             }
         }
 
-        private void AddTreeFolder(FolderItem folderItem, TreeNodeCollection treeNode)
+        private void AddTreeFolder(FolderItem folderItem, TreeNodeCollection treeNode, bool filtered)
         {
-            if (!folderItem.HasLocalizers)
+            if (!folderItem.HasLocalizers || (filtered && !folderItem.MatchFilter))
                 return;
 
             var node = new TreeNode(folderItem.Name, 0, 0) { Tag = folderItem };
             treeNode.Add(node);
             foreach (var subFolder in folderItem.SubFolders)
             {
-                AddTreeFolder(subFolder, node.Nodes);
+                AddTreeFolder(subFolder, node.Nodes, filtered);
             }
-            AddTreeFiles(folderItem, node.Nodes);
+            AddTreeFiles(folderItem, node.Nodes, filtered);
         }
 
         private void SetComponentsOnAnalyzing(bool isAnalyzing)
@@ -150,8 +177,7 @@ namespace StringLocalizer
             foreach (var key in item.Keys)
                 resourceEditor.AddKey(key);
 
-            var path = GetResourceFolderPath(item);
-            var resxFiles = Directory.GetFiles(path, $"{item.Name}*.resx");
+            var resxFiles = GetResourceFiles(item);
             foreach (var resxFile in resxFiles)
             {
                 var language = Path.GetFileNameWithoutExtension(resxFile).Substring(item.Name.Length).Split('.').Last();
@@ -171,6 +197,12 @@ namespace StringLocalizer
                         resourceEditor.AddLanguageValue(key, language, value);
                 }
             }
+        }
+
+        private IEnumerable<string> GetResourceFiles(ClassItem classItem)
+        {
+            var path = GetResourceFolderPath(classItem);
+            return Directory.Exists(path) ? Directory.GetFiles(path, $"{classItem.Name}*.resx") : [];
         }
 
         private void resourceEditor_CommentChanged(object sender, (string Key, string Value) e)
@@ -239,11 +271,83 @@ namespace StringLocalizer
             return Path.Combine(_resourcesFolder, resPath);
         }
 
+        private IEnumerable<string> GetResourceLanguages(ClassItem classItem)
+        {
+            var resxFiles = GetResourceFiles(classItem);
+            var languages = resxFiles.Select(i => Path.GetFileNameWithoutExtension(i).Substring(classItem.Name.Length).Split('.').Last());
+            return languages.Where(i => !string.IsNullOrEmpty(i));
+        }
+
         private void findToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using (var formFind = new FormFind())
             {
-                formFind.ShowDialog();
+                if (formFind.ShowDialog() != DialogResult.OK)
+                    return;
+
+                var startItem = formFind.InSelectedPathOnly ? treeView.SelectedNode?.Tag as FolderItem : _rootFolderItem;
+                if (startItem == null)
+                {
+                    MessageBox.Show("Please select a folder or file to start the search.", "No selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                SetComponentsOnAnalyzing(true);
+                resourceEditor.Clear();
+                _rootFolderItem.ClearMatchFilter();
+                FilterTree(formFind.FinText, startItem, formFind.MatchCase, formFind.MatchWholeWord);
+            }
+        }
+
+        private void FilterTree(string text, FolderItem folderItem, bool matchCase, bool matchWholeWord)
+        {
+            Task.Factory.StartNew(() =>
+            {
+                FilterFolder(text, folderItem, matchCase, matchWholeWord);
+                this.Invoke((MethodInvoker)delegate
+                {
+                    treeView.Nodes.Clear();
+                    CreateTree(true);
+                    panelFilter.Visible = true;
+                    SetComponentsOnAnalyzing(false);
+                });
+            });
+        }
+
+        private void FilterFolder(string text, FolderItem folderItem, bool matchCase, bool matchWholeWord)
+        {
+            foreach (var subFolder in folderItem.SubFolders)
+            {
+                FilterFolder(text, subFolder, matchCase, matchWholeWord);
+            }
+            foreach (var classItem in folderItem.ClassItems)
+            {
+                var resxFiles = GetResourceFiles(classItem);
+                foreach (var resxFile in resxFiles)
+                {
+                    var xdoc = XDocument.Load(resxFile);
+                    var dataElements = xdoc.Descendants("data");
+                    var keys = dataElements
+                        .Select(i => i.Attribute("name")?.Value)
+                        .Where(i => !string.IsNullOrEmpty(i));
+                    var values = dataElements
+                        .Select(i => i.Element("value")?.Value)
+                        .Where(i => !string.IsNullOrEmpty(i));
+                    var comments = dataElements
+                        .Select(i => i.Element("comment")?.Value)
+                        .Where(i => !string.IsNullOrEmpty(i));
+                    var allTexts = keys.Concat(values).Concat(comments);
+                    var stringComparison = matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+                    if (matchWholeWord)
+                    {
+                        if (allTexts.Any(i => i.Equals(text, stringComparison)))
+                            classItem.SetMatchFilter();
+                    }
+                    else
+                    {
+                        if (allTexts.Any(i => i.Contains(text, stringComparison)))
+                            classItem.SetMatchFilter();
+                    }
+                }
             }
         }
 
@@ -251,7 +355,8 @@ namespace StringLocalizer
         {
             using (var formReplace = new FormReplace())
             {
-                formReplace.ShowDialog();
+                if (formReplace.ShowDialog() != DialogResult.OK)
+                    return;
             }
         }
 
@@ -267,9 +372,18 @@ namespace StringLocalizer
 
         private void SetMenuItemsEnabled()
         {
-            findToolStripMenuItem.Enabled = treeView.Nodes.Count > 0;
-            replaceToolStripMenuItem.Enabled = treeView.Nodes.Count > 0;
+            findToolStripMenuItem.Enabled = treeView.Nodes.Count > 0 && !string.IsNullOrEmpty(_resourcesFolder);
+            replaceToolStripMenuItem.Enabled = treeView.Nodes.Count > 0 && !string.IsNullOrEmpty(_resourcesFolder);
             createMissingFilesToolStripMenuItem.Enabled = treeView.Nodes.Count > 0 && !string.IsNullOrEmpty(_resourcesFolder);
+        }
+
+        private void buttonCancelFiter_Click(object sender, EventArgs e)
+        {
+            panelFilter.Visible = false;
+            resourceEditor.Clear();
+            treeView.Nodes.Clear();
+            _rootFolderItem.ClearMatchFilter();
+            CreateTree(false);
         }
     }
 }
