@@ -41,30 +41,32 @@
             replaceToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator2 = new ToolStripSeparator();
             createMissingFilesToolStripMenuItem = new ToolStripMenuItem();
+            projectToolStripMenuItem = new ToolStripMenuItem();
+            addLanguageToolStripMenuItem = new ToolStripMenuItem();
             folderBrowserDialog = new FolderBrowserDialog();
             treeView = new TreeView();
             imageList = new ImageList(components);
             splitContainer = new SplitContainer();
+            panelFilter = new Panel();
+            lbFilter = new Label();
+            buttonCancelFiter = new Button();
             resourceEditor = new ResourceEditor();
             statusStrip = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
             lbResourcesFolder = new ToolStripStatusLabel();
             toolStripProgressBar = new ToolStripProgressBar();
-            panelFilter = new Panel();
-            buttonCancelFiter = new Button();
-            lbFilter = new Label();
             menuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
             splitContainer.Panel1.SuspendLayout();
             splitContainer.Panel2.SuspendLayout();
             splitContainer.SuspendLayout();
-            statusStrip.SuspendLayout();
             panelFilter.SuspendLayout();
+            statusStrip.SuspendLayout();
             SuspendLayout();
             // 
             // menuStrip
             // 
-            menuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem });
+            menuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, projectToolStripMenuItem });
             menuStrip.Location = new Point(0, 0);
             menuStrip.Name = "menuStrip";
             menuStrip.Size = new Size(1174, 24);
@@ -146,6 +148,22 @@
             createMissingFilesToolStripMenuItem.Text = "&Create missing files";
             createMissingFilesToolStripMenuItem.Click += createMissingFilesToolStripMenuItem_Click;
             // 
+            // projectToolStripMenuItem
+            // 
+            projectToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { addLanguageToolStripMenuItem });
+            projectToolStripMenuItem.Name = "projectToolStripMenuItem";
+            projectToolStripMenuItem.Size = new Size(56, 20);
+            projectToolStripMenuItem.Text = "&Project";
+            // 
+            // addLanguageToolStripMenuItem
+            // 
+            addLanguageToolStripMenuItem.Enabled = false;
+            addLanguageToolStripMenuItem.Name = "addLanguageToolStripMenuItem";
+            addLanguageToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.A;
+            addLanguageToolStripMenuItem.Size = new Size(190, 22);
+            addLanguageToolStripMenuItem.Text = "Add &language";
+            addLanguageToolStripMenuItem.Click += addLanguageToolStripMenuItem_Click;
+            // 
             // treeView
             // 
             treeView.BackColor = SystemColors.Window;
@@ -186,6 +204,41 @@
             splitContainer.SplitterDistance = 284;
             splitContainer.TabIndex = 2;
             // 
+            // panelFilter
+            // 
+            panelFilter.BackColor = Color.Red;
+            panelFilter.Controls.Add(lbFilter);
+            panelFilter.Controls.Add(buttonCancelFiter);
+            panelFilter.Dock = DockStyle.Top;
+            panelFilter.Location = new Point(0, 0);
+            panelFilter.Name = "panelFilter";
+            panelFilter.Size = new Size(284, 21);
+            panelFilter.TabIndex = 2;
+            panelFilter.Visible = false;
+            // 
+            // lbFilter
+            // 
+            lbFilter.Dock = DockStyle.Fill;
+            lbFilter.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lbFilter.ForeColor = Color.White;
+            lbFilter.Location = new Point(0, 0);
+            lbFilter.Name = "lbFilter";
+            lbFilter.Size = new Size(209, 21);
+            lbFilter.TabIndex = 1;
+            lbFilter.Text = "Filter Active";
+            lbFilter.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // buttonCancelFiter
+            // 
+            buttonCancelFiter.Dock = DockStyle.Right;
+            buttonCancelFiter.Location = new Point(209, 0);
+            buttonCancelFiter.Name = "buttonCancelFiter";
+            buttonCancelFiter.Size = new Size(75, 21);
+            buttonCancelFiter.TabIndex = 0;
+            buttonCancelFiter.Text = "Clear";
+            buttonCancelFiter.UseVisualStyleBackColor = true;
+            buttonCancelFiter.Click += buttonCancelFiter_Click;
+            // 
             // resourceEditor
             // 
             resourceEditor.Dock = DockStyle.Fill;
@@ -225,41 +278,6 @@
             toolStripProgressBar.Style = ProgressBarStyle.Marquee;
             toolStripProgressBar.Visible = false;
             // 
-            // panelFilter
-            // 
-            panelFilter.BackColor = Color.Red;
-            panelFilter.Controls.Add(lbFilter);
-            panelFilter.Controls.Add(buttonCancelFiter);
-            panelFilter.Dock = DockStyle.Top;
-            panelFilter.Location = new Point(0, 0);
-            panelFilter.Name = "panelFilter";
-            panelFilter.Size = new Size(284, 21);
-            panelFilter.TabIndex = 2;
-            panelFilter.Visible = false;
-            // 
-            // buttonCancelFiter
-            // 
-            buttonCancelFiter.Dock = DockStyle.Right;
-            buttonCancelFiter.Location = new Point(209, 0);
-            buttonCancelFiter.Name = "buttonCancelFiter";
-            buttonCancelFiter.Size = new Size(75, 21);
-            buttonCancelFiter.TabIndex = 0;
-            buttonCancelFiter.Text = "Clear";
-            buttonCancelFiter.UseVisualStyleBackColor = true;
-            buttonCancelFiter.Click += buttonCancelFiter_Click;
-            // 
-            // lbFilter
-            // 
-            lbFilter.Dock = DockStyle.Fill;
-            lbFilter.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lbFilter.ForeColor = Color.White;
-            lbFilter.Location = new Point(0, 0);
-            lbFilter.Name = "lbFilter";
-            lbFilter.Size = new Size(209, 21);
-            lbFilter.TabIndex = 1;
-            lbFilter.Text = "Filter Active";
-            lbFilter.TextAlign = ContentAlignment.MiddleCenter;
-            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -278,9 +296,9 @@
             splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer).EndInit();
             splitContainer.ResumeLayout(false);
+            panelFilter.ResumeLayout(false);
             statusStrip.ResumeLayout(false);
             statusStrip.PerformLayout();
-            panelFilter.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -310,5 +328,7 @@
         private Panel panelFilter;
         private Label lbFilter;
         private Button buttonCancelFiter;
+        private ToolStripMenuItem projectToolStripMenuItem;
+        private ToolStripMenuItem addLanguageToolStripMenuItem;
     }
 }

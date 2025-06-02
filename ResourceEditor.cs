@@ -72,6 +72,13 @@ namespace StringLocalizer
                 _table.Columns.RemoveAt(_table.Columns.Count - 1);
         }
 
+        public IEnumerable<string> GetLanguages()
+        {
+            return _table.Columns.Cast<DataColumn>()
+                .Where(c => c.ColumnName != "Key" && c.ColumnName != "Comment" && c.ColumnName != "Neutral")
+                .Select(c => c.ColumnName);
+        }
+
         private void CreateDataSource()
         {
             _table = new DataTable();

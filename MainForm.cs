@@ -4,6 +4,7 @@ using System.Xml.Linq;
 
 using StringLocalizer.Models;
 using StringLocalizer.Properties;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace StringLocalizer
 {
@@ -66,16 +67,29 @@ namespace StringLocalizer
         {
             Task.Factory.StartNew(() =>
             {
-                _rootFolderItem = new FolderItem(_projectFolder, null);
-                ScanFolder(_projectFolder, _rootFolderItem);
-                this.Invoke((MethodInvoker)delegate
+                try
                 {
-                    CreateTree(false);
-                    SetComponentsOnAnalyzing(false);
-                    if (!string.IsNullOrEmpty(_resourcesFolder))
-                        AddLanguageColumns(_rootFolderItem);
-                    SetMenuItemsEnabled();
-                });
+                    _rootFolderItem = new FolderItem(_projectFolder, null);
+                    ScanFolder(_projectFolder, _rootFolderItem);
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        CreateTree(false);
+                        if (!string.IsNullOrEmpty(_resourcesFolder))
+                            AddLanguageColumns(_rootFolderItem);
+                    });
+                }
+                catch (Exception ex)
+                {
+                    this.Invoke((MethodInvoker)delegate { MessageBox.Show(ex.Message, "StringLocalizer", MessageBoxButtons.OK, MessageBoxIcon.Error); });
+                }
+                finally
+                {
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        SetComponentsOnAnalyzing(false);
+                        SetMenuItemsEnabled();
+                    });
+                }
             });
         }
 
@@ -209,7 +223,30 @@ namespace StringLocalizer
         private IEnumerable<string> GetResourceFiles(ClassItem classItem)
         {
             var path = GetResourceFolderPath(classItem);
-            return Directory.Exists(path) ? Directory.GetFiles(path, $"{classItem.Name}*.resx") : [];
+            if (!Directory.Exists(path))
+                return [];
+            var allResourceFiles = Directory.GetFiles(path, $"{classItem.Name}*.resx");
+            var result = new List<string>();
+            foreach (var file in allResourceFiles)
+            {
+                var classNameParts = classItem.Name.Split('.');
+                var fileNameParts = Path.GetFileNameWithoutExtension(file).Split('.');
+                var lengthDiff = fileNameParts.Length - classNameParts.Length;
+                if (lengthDiff > 1)
+                    continue;
+                bool skip = false;
+                for (int i = 0; i < classNameParts.Length; i++)
+                {
+                    if (!classNameParts[i].Equals(fileNameParts[i]))
+                    {
+                        skip = true;
+                        break;
+                    }
+                }
+                if (!skip)
+                    result.Add(file);
+            }
+            return result;
         }
 
         private void resourceEditor_CommentChanged(object sender, (string Key, string Value) e)
@@ -229,13 +266,13 @@ namespace StringLocalizer
 
         private void SetXValue(string key, string language, string value, string nameAttr)
         {
-            var path = GetResourceFilePath(language);
+            var path = GetResourceFilePath(treeView.SelectedNode?.Tag as ClassItem, language);
             var xDoc = GetXDocument(path);
             var element = GetDataElement(xDoc, key, out bool isNew);
             if (isNew && string.IsNullOrEmpty(value))
                 return;
             element.SetElementValue(nameAttr, value);
-            xDoc.Save(path);
+            SaveXDocSafe(xDoc, path);
         }
 
         private XDocument GetXDocument(string path)
@@ -250,12 +287,11 @@ namespace StringLocalizer
             }
         }
 
-        private string GetResourceFilePath(string language)
+        private string GetResourceFilePath(ClassItem classItem, string language)
         {
-            var item = treeView.SelectedNode?.Tag as ClassItem;
             var languagePart = string.IsNullOrEmpty(language) ? string.Empty : $".{language}";
-            var fileName = $"{item.Name}{languagePart}.resx";
-            return Path.Combine(GetResourceFolderPath(item), fileName);
+            var fileName = $"{classItem.Name}{languagePart}.resx";
+            return Path.Combine(GetResourceFolderPath(classItem), fileName);
         }
 
         private XElement GetDataElement(XDocument xDoc, string key, out bool isNew)
@@ -281,6 +317,7 @@ namespace StringLocalizer
         private IEnumerable<string> GetResourceLanguages(ClassItem classItem)
         {
             var resxFiles = GetResourceFiles(classItem);
+
             var languages = resxFiles.Select(i => Path.GetFileNameWithoutExtension(i).Substring(classItem.Name.Length).Split('.').Last());
             return languages.Where(i => !string.IsNullOrEmpty(i));
         }
@@ -301,7 +338,6 @@ namespace StringLocalizer
                 SetComponentsOnAnalyzing(true);
                 _rootFolderItem.ClearMatchFilter();
                 FilterTree(formFind.FinText, startItem, formFind.MatchCase, formFind.MatchWholeWord);
-                SetResourceEditorContent();
             }
         }
 
@@ -309,14 +345,28 @@ namespace StringLocalizer
         {
             Task.Factory.StartNew(() =>
             {
-                FilterFolder(text, folderItem, matchCase, matchWholeWord);
-                this.Invoke((MethodInvoker)delegate
+                try
                 {
-                    treeView.Nodes.Clear();
-                    CreateTree(true);
-                    panelFilter.Visible = true;
-                    SetComponentsOnAnalyzing(false);
-                });
+                    FilterFolder(text, folderItem, matchCase, matchWholeWord);
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        treeView.Nodes.Clear();
+                        CreateTree(true);
+                    });
+                }
+                catch (Exception ex)
+                {
+                    this.Invoke((MethodInvoker)delegate { MessageBox.Show(ex.Message, "StringLocalizer", MessageBoxButtons.OK, MessageBoxIcon.Error); });
+                }
+                finally
+                {
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        panelFilter.Visible = true;
+                        SetComponentsOnAnalyzing(false);
+                        SetResourceEditorContent();
+                    });
+                }
             });
         }
 
@@ -381,13 +431,26 @@ namespace StringLocalizer
         {
             Task.Factory.StartNew(() =>
             {
-                ReplaceInFolder(text, replaceWith, folderItem, matchCase, matchWholeWord);
-                this.Invoke((MethodInvoker)delegate
+                try
                 {
-                    MessageBox.Show($"Replaced {_replacedItems} occurrences of '{text}' with '{replaceWith}'.", "Replace Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    SetComponentsOnAnalyzing(false);
-                    SetResourceEditorContent();
-                });
+                    ReplaceInFolder(text, replaceWith, folderItem, matchCase, matchWholeWord);
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        MessageBox.Show($"Replaced {_replacedItems} occurrences of '{text}' with '{replaceWith}'.", "Replace Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    });
+                }
+                catch (Exception ex)
+                {
+                    this.Invoke((MethodInvoker)delegate { MessageBox.Show(ex.Message, "StringLocalizer", MessageBoxButtons.OK, MessageBoxIcon.Error); });
+                }
+                finally
+                {
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        SetComponentsOnAnalyzing(false);
+                        SetResourceEditorContent();
+                    });
+                }
             });
         }
 
@@ -437,14 +500,129 @@ namespace StringLocalizer
                         }
                     }
                     if (hasBeenChanged)
-                        xdoc.Save(resxFile);
+                        SaveXDocSafe(xdoc, resxFile);
                 }
             }
         }
 
         private void createMissingFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            using (var formCreateMissing = new FormCreateMissingResources())
+            {
+                if (formCreateMissing.ShowDialog() != DialogResult.OK)
+                    return;
 
+                var startItem = formCreateMissing.InSelectedPathOnly ? treeView.SelectedNode?.Tag as FolderItem : _rootFolderItem;
+                if (startItem == null)
+                {
+                    MessageBox.Show("Please select a folder or file to start the search.", "No selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                SetComponentsOnAnalyzing(true);
+                _addedKeys = 0;
+                _addedResources = 0;
+                CreateMissing(startItem, formCreateMissing.CreareNeutral, formCreateMissing.SetNeutralByKey);
+            }
+        }
+
+        private void CreateMissing(FolderItem folderItem, bool createNeutral, bool setNeutralByKey)
+        {
+            Task.Factory.StartNew(() =>
+            {
+                try
+                {
+                    CreateMissingFilesInFolder(folderItem, createNeutral, setNeutralByKey);
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        MessageBox.Show($"added {_addedResources} resources files and {_addedKeys} keys.", "Creating missing Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    });
+                }
+                catch (Exception ex)
+                {
+                    this.Invoke((MethodInvoker)delegate { MessageBox.Show(ex.Message, "StringLocalizer", MessageBoxButtons.OK, MessageBoxIcon.Error); });
+                }
+                finally
+                {
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        SetComponentsOnAnalyzing(false);
+                        SetResourceEditorContent();
+                    });
+                }
+            });
+        }
+
+        int _addedResources;
+        int _addedKeys;
+        private void CreateMissingFilesInFolder(FolderItem folderItem, bool createNeutral, bool setNeutralByKey)
+        {
+            foreach (var subFolder in folderItem.SubFolders)
+            {
+                CreateMissingFilesInFolder(subFolder, createNeutral, setNeutralByKey);
+            }
+            foreach (var classItem in folderItem.ClassItems)
+            {
+                if (createNeutral)
+                {
+                    CreateMissingNeutralResx(classItem, setNeutralByKey);
+                }
+                foreach (var language in resourceEditor.GetLanguages())
+                {
+                    bool needToBeSaved = false;
+                    var resxFilePath = GetResourceFilePath(classItem, language);
+                    if (!File.Exists(resxFilePath))
+                    {
+                        _addedResources++;
+                        needToBeSaved = true;
+                    }
+                    var xDoc = GetXDocument(resxFilePath);
+                    foreach (var key in classItem.Keys)
+                    {
+                        var element = GetDataElement(xDoc, key, out bool isNew);
+                        if (isNew)
+                        {
+                            _addedKeys++;
+                            needToBeSaved = true;
+                        }
+                    }
+                    if (needToBeSaved)
+                        SaveXDocSafe(xDoc, resxFilePath);
+                }
+            }
+        }
+
+        private void CreateMissingNeutralResx(ClassItem classItem, bool setNeutralByKey)
+        {
+            var resxFilePath = GetResourceFilePath(classItem, null);
+            bool needToBeSaved = false;
+            if (!File.Exists(resxFilePath))
+            {
+                _addedResources++;
+                needToBeSaved = true;
+            }
+            var xDoc = GetXDocument(resxFilePath);
+            if (setNeutralByKey)
+            {
+                foreach (var key in classItem.Keys)
+                {
+                    var element = GetDataElement(xDoc, key, out bool isNew);
+                    if (isNew)
+                    {
+                        _addedKeys++;
+                        needToBeSaved = true;
+                    }
+
+                    if (setNeutralByKey && !key.Equals(element.Value))
+                    {
+                        element.SetElementValue("value", key);
+                        needToBeSaved = true;
+                    }
+                }
+            }
+            if (needToBeSaved)
+            {
+                SaveXDocSafe(xDoc, resxFilePath);
+            }
         }
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
@@ -457,6 +635,7 @@ namespace StringLocalizer
             findToolStripMenuItem.Enabled = treeView.Nodes.Count > 0 && !string.IsNullOrEmpty(_resourcesFolder);
             replaceToolStripMenuItem.Enabled = treeView.Nodes.Count > 0 && !string.IsNullOrEmpty(_resourcesFolder);
             createMissingFilesToolStripMenuItem.Enabled = treeView.Nodes.Count > 0 && !string.IsNullOrEmpty(_resourcesFolder);
+            addLanguageToolStripMenuItem.Enabled = treeView.Nodes.Count > 0 && !string.IsNullOrEmpty(_resourcesFolder);
         }
 
         private void buttonCancelFiter_Click(object sender, EventArgs e)
@@ -466,6 +645,33 @@ namespace StringLocalizer
             _rootFolderItem.ClearMatchFilter();
             CreateTree(false);
             SetResourceEditorContent();
+        }
+
+        private void addLanguageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var formAddLanguage = new FormAddLanguage())
+            {
+                if (formAddLanguage.ShowDialog() != DialogResult.OK)
+                    return;
+
+                if (formAddLanguage.CultureName == null)
+                {
+                    MessageBox.Show("Please select a culture to add.", "No Culture Selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                resourceEditor.AddLanguage(formAddLanguage.CultureName);
+            }
+        }
+
+        private void SaveXDocSafe(XDocument xDoc, string path)
+        {
+            var fileInfo = new FileInfo(path);
+            if (!fileInfo.Directory.Exists)
+            {
+                fileInfo.Directory.Create();
+            }
+            xDoc.Save(path);
         }
     }
 }

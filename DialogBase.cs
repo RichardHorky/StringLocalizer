@@ -10,16 +10,11 @@ using System.Windows.Forms;
 
 namespace StringLocalizer
 {
-    public partial class FormEditBase : DialogBase
+    public partial class DialogBase : Form
     {
-        public FormEditBase()
+        public DialogBase()
         {
             InitializeComponent();
-        }
-
-        public bool InSelectedPathOnly
-        {
-            get => chInSelectedPathOnly.Checked;
         }
     }
 }

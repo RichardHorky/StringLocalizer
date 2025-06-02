@@ -1,6 +1,6 @@
 ﻿namespace StringLocalizer
 {
-    partial class FormEditBase
+    partial class FormAddLanguage
     {
         /// <summary>
         /// Required designer variable.
@@ -28,39 +28,35 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormEditBase));
-            chInSelectedPathOnly = new CheckBox();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormAddLanguage));
+            treeView = new TreeView();
             SuspendLayout();
             // 
-            // chInSelectedPathOnly
+            // treeView
             // 
-            chInSelectedPathOnly.AutoSize = true;
-            chInSelectedPathOnly.Dock = DockStyle.Top;
-            chInSelectedPathOnly.Location = new Point(3, 3);
-            chInSelectedPathOnly.Name = "chInSelectedPathOnly";
-            chInSelectedPathOnly.Padding = new Padding(3, 0, 0, 0);
-            chInSelectedPathOnly.Size = new Size(578, 19);
-            chInSelectedPathOnly.TabIndex = 0;
-            chInSelectedPathOnly.Text = "In &selected path only";
-            chInSelectedPathOnly.UseVisualStyleBackColor = true;
+            treeView.Dock = DockStyle.Fill;
+            treeView.DrawMode = TreeViewDrawMode.OwnerDrawText;
+            treeView.Location = new Point(0, 0);
+            treeView.Name = "treeView";
+            treeView.Size = new Size(511, 421);
+            treeView.TabIndex = 3;
+            treeView.DrawNode += treeView_DrawNode;
             // 
-            // FormEditBase
+            // FormAddLanguage
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(584, 195);
-            Controls.Add(chInSelectedPathOnly);
-            FormBorderStyle = FormBorderStyle.FixedDialog;
+            ClientSize = new Size(511, 450);
+            Controls.Add(treeView);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            Name = "FormEditBase";
-            Padding = new Padding(3);
-            Text = "FormEditBase";
+            Name = "FormAddLanguage";
+            Text = "Add Language";
+            Controls.SetChildIndex(treeView, 0);
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
 
-        private CheckBox chInSelectedPathOnly;
+        private TreeView treeView;
     }
 }

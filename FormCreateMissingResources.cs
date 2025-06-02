@@ -10,16 +10,21 @@ using System.Windows.Forms;
 
 namespace StringLocalizer
 {
-    public partial class FormEditBase : DialogBase
+    public partial class FormCreateMissingResources : FormEditBase
     {
-        public FormEditBase()
+        public FormCreateMissingResources()
         {
             InitializeComponent();
         }
 
-        public bool InSelectedPathOnly
+        public bool CreareNeutral
         {
-            get => chInSelectedPathOnly.Checked;
+            get => chCreateNeutral.Checked;
+        }
+
+        public bool SetNeutralByKey
+        {
+            get => chSetNeutralByKey.Checked;
         }
     }
 }
