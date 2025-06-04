@@ -44,6 +44,10 @@ namespace StringLocalizer
             AddLanguageColumns(_rootFolderItem);
         }
 
+        /// <summary>
+        /// adds all missing language columns to the resource editor for all class resources.
+        /// </summary>
+        /// <param name="folderItem"></param>
         private void AddLanguageColumns(FolderItem folderItem)
         {
             foreach (var folder in folderItem.SubFolders)
@@ -63,8 +67,12 @@ namespace StringLocalizer
             SetMenuItemsEnabled();
         }
 
+        /// <summary>
+        /// scans all classes in project folder and tries to find all localizable keys in them.
+        /// </summary>
         private void ScanProjectFolder()
         {
+            //do it in separate thread to not block UI
             Task.Factory.StartNew(() =>
             {
                 try
@@ -105,11 +113,12 @@ namespace StringLocalizer
             {
                 if (file.Extension.ToLower() != _justCodeExtension)
                 {
-                    //keys from just from page
+                    //keys just from page - not do tit in case of .cs file
                     var keys = ParsingHelper.ExtractKeysFromRazorFile(file.FullName);
                     if (keys.Keys.Count() > 0)
                         folderItem.AddClassItem(keys.ClassName, file.Extension, keys.Keys);
                 }
+                //find classes in all type of files
                 var classes = ParsingHelper.ExtractKeysFromCsFile(file.FullName);
                 foreach (var cl in classes.Where(i => i.Value.Count() > 0))
                 {
@@ -118,6 +127,10 @@ namespace StringLocalizer
             }
         }
 
+        /// <summary>
+        /// scan class resources to add missing language columns
+        /// </summary>
+        /// <param name="classItem"></param>
         private void AddMissingLanguageColumns(ClassItem classItem)
         {
             foreach (var language in GetResourceLanguages(classItem))
@@ -159,6 +172,7 @@ namespace StringLocalizer
 
         private void AddTreeFolder(FolderItem folderItem, TreeNodeCollection treeNode, bool filtered)
         {
+            //skip folders without class with localizable key and folders that do not match filter if filter is active
             if (!folderItem.HasLocalizers || (filtered && !folderItem.MatchFilter))
                 return;
 
@@ -171,6 +185,10 @@ namespace StringLocalizer
             AddTreeFiles(folderItem, node.Nodes, filtered);
         }
 
+        /// <summary>
+        /// disable or enable components on the form depending on whether we are analyzing project or not.
+        /// </summary>
+        /// <param name="isAnalyzing"></param>
         private void SetComponentsOnAnalyzing(bool isAnalyzing)
         {
             splitContainer.Enabled = !isAnalyzing;
@@ -183,7 +201,10 @@ namespace StringLocalizer
             SetResourceEditorContent();
         }
 
-        void SetResourceEditorContent()
+        /// <summary>
+        /// sets resource editor content by selected tree item
+        /// </summary>
+        private void SetResourceEditorContent()
         {
             resourceEditor.Clear();
 
@@ -220,6 +241,11 @@ namespace StringLocalizer
             }
         }
 
+        /// <summary>
+        /// returns all resource files for the class item.
+        /// </summary>
+        /// <param name="classItem"></param>
+        /// <returns></returns>
         private IEnumerable<string> GetResourceFiles(ClassItem classItem)
         {
             var path = GetResourceFolderPath(classItem);
@@ -229,6 +255,7 @@ namespace StringLocalizer
             var result = new List<string>();
             foreach (var file in allResourceFiles)
             {
+                //need to check if file name matches class name
                 var classNameParts = classItem.Name.Split('.');
                 var fileNameParts = Path.GetFileNameWithoutExtension(file).Split('.');
                 var lengthDiff = fileNameParts.Length - classNameParts.Length;
@@ -275,6 +302,11 @@ namespace StringLocalizer
             SaveXDocSafe(xDoc, path);
         }
 
+        /// <summary>
+        /// returns XDocument for the given path. If file does not exist, it returns a new XDocument with base resources.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         private XDocument GetXDocument(string path)
         {
             if (File.Exists(path))
@@ -287,6 +319,12 @@ namespace StringLocalizer
             }
         }
 
+        /// <summary>
+        /// returns the path to the resource file for the given class item and language.
+        /// </summary>
+        /// <param name="classItem"></param>
+        /// <param name="language"></param>
+        /// <returns></returns>
         private string GetResourceFilePath(ClassItem classItem, string language)
         {
             var languagePart = string.IsNullOrEmpty(language) ? string.Empty : $".{language}";
@@ -294,26 +332,44 @@ namespace StringLocalizer
             return Path.Combine(GetResourceFolderPath(classItem), fileName);
         }
 
+        /// <summary>
+        /// returns the data element for the given key. If it does not exist, it creates a new one and returns it.
+        /// </summary>
+        /// <param name="xDoc"></param>
+        /// <param name="key"></param>
+        /// <param name="isNew"></param>
+        /// <returns></returns>
         private XElement GetDataElement(XDocument xDoc, string key, out bool isNew)
         {
             isNew = false;
             var element = xDoc.Descendants("data").FirstOrDefault(d => d.Attribute("name")?.Value == key);
             if (element == null)
             {
-                element = new XElement("data", new XAttribute("name", key), new XAttribute(XNamespace.Xml + "space", "preserve"));
+                element = new XElement("data", new XAttribute("name", key), new XAttribute(XNamespace.Xml + "space", "preserve"), new XElement("value"));
                 xDoc.Root.Add(element);
                 isNew = true;
             }
             return element;
         }
 
+        /// <summary>
+        /// returns path to the resource folder for the given class item.
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
         private string GetResourceFolderPath(ClassItem item)
         {
             var path = item.GetFullPath();
+            //get path relative to root folder item
             var resPath = path == _rootFolderItem.Name ? string.Empty : path.Substring(_rootFolderItem.Name.Length + 1);
             return Path.Combine(_resourcesFolder, resPath);
         }
 
+        /// <summary>
+        /// returns all languages for the given class item by checking the resource files in the resource folder.
+        /// </summary>
+        /// <param name="classItem"></param>
+        /// <returns></returns>
         private IEnumerable<string> GetResourceLanguages(ClassItem classItem)
         {
             var resxFiles = GetResourceFiles(classItem);

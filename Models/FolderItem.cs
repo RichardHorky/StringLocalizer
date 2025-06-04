@@ -20,12 +20,18 @@ namespace StringLocalizer.Models
         public ClassItem[] ClassItems { get; private set; } = [];
 
         private bool _hasLocalizers;
+        /// <summary>
+        /// Indicates whether this branch contains any class items containing localizable keys.
+        /// </summary>
         public bool HasLocalizers 
         { 
             get => _hasLocalizers;
         }
 
         private bool _matchFilter;
+        /// <summary>
+        /// Indicates whether this branch contains any class items matching the current filter.
+        /// </summary>
         public bool MatchFilter
         {
             get => _matchFilter;
@@ -57,20 +63,27 @@ namespace StringLocalizer.Models
             ClassItems = ClassItems.Append(new ClassItem(name, ItemTypeEnum.CSharp, keys, this)).ToArray();
             SetHasLocalizers();
         }
+        /// <summary>
+        /// Sets the has localizers flag for this folder and all parents.
+        /// </summary>
         public void SetHasLocalizers()
         {
             _hasLocalizers = true;
             if (Parent != null)
                 Parent.SetHasLocalizers();
         }
-
+        /// <summary>
+        /// Sets the match filter flag for this folder and all parents.
+        /// </summary>
         public void SetMatchFilter()
         {
             _matchFilter = true;
             if (Parent != null)
                 Parent.SetMatchFilter();
         }
-
+        /// <summary>
+        /// Clears the match filter flag for this folder and all subfolders.
+        /// </summary>
         public void ClearMatchFilter()
         {
             _matchFilter = false;
@@ -86,7 +99,10 @@ namespace StringLocalizer.Models
             SubFolders = SubFolders.Append(folderItem).ToArray();
             return folderItem;
         }
-
+        /// <summary>
+        /// Returns the full path of the folder.
+        /// </summary>
+        /// <returns></returns>
         public string GetFullPath()
         {
             if (Parent == null)
@@ -122,7 +138,10 @@ namespace StringLocalizer.Models
         {
             get => _matchFilter;
         }
-
+        /// <summary>
+        /// Returns the full path of the class item.
+        /// </summary>
+        /// <returns></returns>
         public string GetFullPath()
         {
             return Parent.GetFullPath();
