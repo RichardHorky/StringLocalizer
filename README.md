@@ -31,7 +31,7 @@ Unzip and run `StringLocalizer.exe`.
 
 1. Run the app
 2. Select the root directory of your Razor project
-3. It scans `.cshtml` files for missing keys used with `IStringLocalizer` or `IViewLocalizer`
+3. It scans `.cshtml`, `.razor` and `.cs` files for all keys used with `IStringLocalizer` or `IViewLocalizer`
 4. Missing keys are displayed and can be exported to resource files
 
 ---
