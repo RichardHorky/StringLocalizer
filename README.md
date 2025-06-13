@@ -59,7 +59,7 @@ All contributions are welcome: issues, pull requests, feedback.
 If this project helps you, consider supporting future development:
 
 - ❤️ **[Sponsor me on GitHub](https://github.com/sponsors/RichardHorky)**
-- ❤️ **[Or Buy Me a Coffee](https://buymeacoffee.com/richardhorky)**
+- <img width="22" height="22" class="octicon rounded-2 d-block" alt="buy_me_a_coffee" src="https://github.githubassets.com/assets/buy_me_a_coffee-63ed78263f6e.svg"> **[Or Buy Me a Coffee](https://buymeacoffee.com/richardhorky)**
 
 ---
 
