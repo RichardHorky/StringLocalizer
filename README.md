@@ -58,7 +58,7 @@ All contributions are welcome: issues, pull requests, feedback.
 
 If this project helps you, consider supporting future development:
 
-- ❤️ **[Sponsor me on GitHub](https://github.com/sponsors/RichardHorky)** _(coming soon)_
+- ❤️ **[Sponsor me on GitHub](https://github.com/sponsors/RichardHorky)**
 
 ---
 
